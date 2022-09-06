@@ -1,3 +1,4 @@
+#![feature(drain_filter)]
 const WIDTH: usize = 12;
 const COUNT: usize = 1000;
 
@@ -20,22 +21,36 @@ pub fn first_task() -> usize {
     gamma * (!gamma & ((1 << WIDTH) - 1))
 }
 
-// fn second_task() -> u64 {
-//     let (h, d, _) = include_str!("../input.txt")
-//         .lines()
-//         .map(|l| l.split_once(" ").unwrap())
-//         .fold((0, 0, 0), |(h, d, a), (k, v)| {
-//             match (k, v.parse::<u64>().unwrap()) {
-//                 ("forward", v) => (h+v, a*v + d, a),
-//                 ("down", v) => (h, d, a+v),
-//                 ("up", v) => (h, d, a-v),
-//                 _ => unreachable!(),
-//             }
-//         });
-//     h*d
-// }
+pub fn second_task() -> usize {
+    let nums: Vec<usize> = include_str!("../input.txt")
+        .lines()
+        .map(|l| usize::from_str_radix(l, 2).unwrap())
+        .collect::<Vec<_>>();
+
+    let oxy: usize = (0..WIDTH)
+        .rev()
+        .scan(nums.clone(), |oxy, i| {
+            let one = oxy.iter().filter(|n| *n & 1 << i > 0).count() >= (oxy.len() + 1) / 2;
+            oxy.drain_filter(|n| (*n & 1 << i > 0) != one);
+            oxy.first().copied()
+        })
+        .last()
+        .unwrap();
+
+    let co2: usize = (0..WIDTH)
+        .rev()
+        .scan(nums, |co2, i| {
+            let one = co2.iter().filter(|n| *n & 1 << i > 0).count() >= (co2.len() + 1) / 2;
+            co2.drain_filter(|n| (*n & 1 << i > 0) == one);
+            co2.first().copied()
+        })
+        .last()
+        .unwrap();
+
+    oxy * co2
+}
 
 fn main() {
     println!("first res {}", first_task());
-    // println!("second res {}", second_task());
+    println!("second res {}", second_task());
 }
